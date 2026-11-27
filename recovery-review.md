@@ -1,5 +1,5 @@
-Root cause and local proof: TODO
-Running image identity: TODO
-Cloud Run revision and log investigation: TODO
-Known-good traffic rollback proposal: TODO
-Post-recovery verification and limits: TODO
+Root cause and local proof: The container originally failed because Docker ran missing.py, which does not exist. After changing the command to app.py, the container stayed running and logged successful listening on port 8080. The application returned HTTP 200 on /health, while the original Docker probe used /ready and returned 404, causing an unhealthy state. Changing the probe to /health produced a healthy container with FailingStreak 0.
+Running image identity: Running container m4-q4 used image ID sha256:213bac8b954027c2dbd68376c72c3d12c77026ba6b3857e6fed4a23c5b5baa79. The parcelstatus:fixed image resolved to the same image ID, confirming that the running container used the fixed image.
+Cloud Run revision and log investigation: For service parcelstatus in us-central1, investigate candidate revision parcelstatus-00002-bad by checking its readiness status and revision-scoped logs. Confirm whether startup or readiness failures are present. These are proposed Cloud Run investigation steps based on the supplied fixture, not observed cloud results.
+Known-good traffic rollback proposal: If candidate revision parcelstatus-00002-bad is not ready or is failing, propose routing 100% of parcelstatus traffic in us-central1 back to the supplied known-good revision parcelstatus-00001-good. This is a written rollback proposal only; no Cloud Run command was executed.
+Post-recovery verification and limits: After the proposed rollback, verify the known-good revision is ready, inspect its revision-scoped logs, and call the actual service /health URL. Local Docker evidence proves the repaired image starts and passes its Docker health probe, but it does not prove Cloud Run readiness, traffic routing, or production recovery.
